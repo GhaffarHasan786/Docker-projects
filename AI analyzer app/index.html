@@ -1,0 +1,190 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Powered Analyzer</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+        }
+
+        .glass-card {
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="glass-card w-full max-w-4xl rounded-3xl p-8 shadow-2xl">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">
+                AI Powered Analyzer
+            </h1>
+
+            <p class="text-slate-300 mt-3">
+                Paste your article, text, or content below and send it to the AI workflow.
+            </p>
+        </div>
+
+        <!-- Success Alert -->
+        <div
+            id="successAlert"
+            class="hidden mb-6 rounded-xl bg-green-500/20 border border-green-500 text-green-200 px-4 py-3"
+        >
+            ✅ Data sent successfully!
+        </div>
+
+        <!-- Error Alert -->
+        <div
+            id="errorAlert"
+            class="hidden mb-6 rounded-xl bg-red-500/20 border border-red-500 text-red-200 px-4 py-3"
+        >
+            ❌ Failed to send data. Please try again.
+        </div>
+
+        <!-- Form -->
+        <form id="analyzerForm" class="space-y-6">
+
+            <textarea
+                id="content"
+                rows="14"
+                placeholder="Paste your article, text, or large content here..."
+                class="w-full rounded-2xl bg-slate-900/70 border border-slate-700 text-white p-5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+            ></textarea>
+
+            <button
+                type="submit"
+                id="submitBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white font-semibold py-4 rounded-2xl flex items-center justify-center gap-3"
+            >
+                <span id="buttonText">Submit for Analysis</span>
+
+                <!-- Spinner -->
+                <svg
+                    id="spinner"
+                    class="hidden animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                >
+                    <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                    ></circle>
+
+                    <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                </svg>
+            </button>
+
+        </form>
+
+    </div>
+
+    <script>
+        /**************************************
+         * N8N WEBHOOK URL
+         **************************************/
+        const n8nWebhookURL = "http://localhost:5678/webhook-test/c3a6fba0-1bb5-427b-b31d-a2eb48b5d826";
+
+        const form = document.getElementById("analyzerForm");
+        const textarea = document.getElementById("content");
+
+        const submitBtn = document.getElementById("submitBtn");
+        const spinner = document.getElementById("spinner");
+        const buttonText = document.getElementById("buttonText");
+
+        const successAlert = document.getElementById("successAlert");
+        const errorAlert = document.getElementById("errorAlert");
+
+        form.addEventListener("submit", async (event) => {
+
+            // Prevent page reload
+            event.preventDefault();
+
+            const text = textarea.value.trim();
+
+            if (!text) {
+                alert("Please enter some text.");
+                return;
+            }
+
+            // Hide alerts
+            successAlert.classList.add("hidden");
+            errorAlert.classList.add("hidden");
+
+            // Loading State
+            spinner.classList.remove("hidden");
+            buttonText.textContent = "Sending...";
+            submitBtn.disabled = true;
+
+            console.log("Submitting data to n8n...");
+
+            try {
+
+                const response = await fetch(n8nWebhookURL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        content: text,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                console.log("Response Status:", response.status);
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Request failed with status ${response.status}`
+                    );
+                }
+
+                const result = await response.json().catch(() => ({}));
+
+                console.log("Success Response:", result);
+
+                successAlert.classList.remove("hidden");
+
+                // Optional: Clear textarea
+                textarea.value = "";
+
+            } catch (error) {
+
+                console.error("n8n Webhook Error:", error);
+
+                errorAlert.classList.remove("hidden");
+
+            } finally {
+
+                spinner.classList.add("hidden");
+                buttonText.textContent = "Submit for Analysis";
+                submitBtn.disabled = false;
+
+            }
+
+        });
+    </script>
+
+</body>
+</html>
+``` 
