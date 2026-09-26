@@ -1,0 +1,34 @@
+services:
+
+  db-server:
+    image: postgres:16
+    container_name: db-server
+
+    environment:
+      POSTGRES_DB: bankdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bankdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  banking-app:
+    build: .
+    container_name: banking-app
+
+    depends_on:
+      db-server:
+        condition: service_healthy
+
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  
